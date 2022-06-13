@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.liubaiblog.blog.mapper.ArticleMapper">
+
+    <resultMap id="BaseResultMap" type="top.liubaiblog.blog.pojo.Article">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="commentCounts" column="comment_counts" jdbcType="INTEGER"/>
+        <result property="createDate" column="create_date" jdbcType="BIGINT"/>
+        <result property="summary" column="summary" jdbcType="VARCHAR"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="viewCounts" column="view_counts" jdbcType="INTEGER"/>
+        <result property="weight" column="weight" jdbcType="INTEGER"/>
+        <result property="authorId" column="author_id" jdbcType="BIGINT"/>
+        <result property="bodyId" column="body_id" jdbcType="BIGINT"/>
+        <result property="categoryId" column="category_id" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,comment_counts,create_date,
+        summary,title,view_counts,
+        weight,author_id,body_id,
+        category_id
+    </sql>
+
+    <!-- List<ArticleArchive> archive(); -->
+    <select id="archive" resultType="top.liubaiblog.blog.vo.ArticleArchive">
+        select year (FROM_UNIXTIME(create_date / 1000)) year,
+            month (FROM_UNIXTIME(create_date / 1000)) month,
+            count(*) `count`
+        from ms_article
+        group by year, month
+    </select>
+
+    <!--
+    Page<Article> selectByParams(Page<Article> page,
+                                 @Param("categoryId") Long categoryId,
+                                 @Param("tagId") Long tagId,
+                                 @Param("year") String year,
+                                 @Param("month") String month);
+    -->
+    <select id="selectByParams" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from ms_article
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                category_id=#{categoryId}
+            </if>
+            <if test="tagId != null and tagId != ''">
+                and id in (select article_id from ms_article_tag where tag_id=#{tagId})
+            </if>
+            <if test="year != null and year != '' and month != null and month != ''">
+                and year(FROM_UNIXTIME(create_date / 1000)) = #{year}
+                and month(FROM_UNIXTIME(create_date / 1000)) = #{month}
+            </if>
+        </where>
+        order by weight desc, create_date desc
+    </select>
+
+    <!-- List<Long> selectCategoryIdAll(); -->
+    <select id="selectCategoryIdAll" resultType="java.lang.Long">
+        select distinct category_id
+        from ms_article;
+    </select>
+
+    <!-- Page<Article> selectByAuthor(Page<Article> articlePage, Long authorId, String sortName); -->
+    <select id="selectByAuthor" resultType="top.liubaiblog.blog.pojo.Article">
+        select
+        <include refid="Base_Column_List"/>
+        from ms_article
+        where author_id=#{authorId}
+        order by
+        <choose>
+            <when test="sortName == 'viewCounts'">
+                view_counts
+            </when>
+            <when test="sortName == 'commentCounts'">
+                comment_counts
+            </when>
+            <otherwise>
+                create_date
+            </otherwise>
+        </choose>
+        desc
+    </select>
+</mapper>

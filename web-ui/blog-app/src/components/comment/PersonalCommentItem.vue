@@ -1,0 +1,275 @@
+<template>
+  <div class="me-view-comment-item" :id="comment.id">
+    <div class="me-view-comment-author">
+      <a class="">
+        <img class="me-view-picture" :src="comment.author.avatar"/>
+      </a>
+      <div class="me-view-info">
+        <span class="me-view-nickname">{{ comment.author.nickname }}</span>
+        <div class="me-view-meta">
+          <span>{{ comment.createDate | format }}</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="me-view-comment-content" >{{ comment.content }}</p>
+      <div class="me-view-comment-tools">
+        <a class="me-view-comment-tool" @click="toArticle">
+          <i class="me-icon-comment"></i>&nbsp;去往原文
+        </a>
+        <a class="me-view-comment-tool" @click="showComment(-1,comment.author)">
+          <i class="me-icon-comment"></i>&nbsp;评论
+        </a>
+        <a class="me-view-comment-tool"
+           v-if="this.comment.author.id === $store.state.id"
+           @click="doDeleteComment(comment.id)"
+        >
+          <i class="me-icon-comment"></i>&nbsp;删除
+        </a>
+      </div>
+
+      <div class="me-reply-list">
+        <div class="me-reply-item" v-for="c in comment.childrens" :key="c.id">
+          <div style="font-size: 14px">
+            <span class="me-reply-user">{{ c.author.nickname }}:&nbsp;&nbsp;</span>
+
+            <span v-if="c.level == 2" class="me-reply-user">@{{ c.toUser.nickname }} </span>
+
+            <span>{{ c.content }}</span>
+          </div>
+          <div class="me-view-meta">
+            <span style="padding-right: 10px">{{ c.createDate | format }}</span>
+            <a class="me-view-comment-tool" v-if="c.author.id === $store.state.id" @click="doDeleteComment(c.id)">
+              <i class="me-icon-comment"></i>&nbsp;删除
+            </a>
+          </div>
+
+        </div>
+
+        <div class="me-view-comment-write" v-show="commentShow">
+
+          <el-input
+            v-model="reply.content"
+            type="input"
+            style="width: 90%"
+            :placeholder="placeholder"
+            class="me-view-comment-text"
+            resize="none">
+          </el-input>
+
+          <el-button style="margin-left: 8px" @click="publishComment()" type="text">评论</el-button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script>
+import {publishComment} from '@/api/comment'
+import {deleteComment} from "@/api/comment";
+
+export default {
+  name: "CommentItem",
+  props: {
+    articleId: String,
+    comment: Object,
+    index: Number,
+    rootCommentCounts: Number
+  },
+  data() {
+    return {
+      placeholder: '你的评论...',
+      commentShow: false,
+      commentShowIndex: '',
+      reply: this.getEmptyReply()
+    }
+  },
+  methods: {
+    showComment(commentShowIndex, toUser) {
+      this.reply = this.getEmptyReply()
+
+      if (this.commentShowIndex !== commentShowIndex) {
+        if (toUser) {
+          this.placeholder = `@${toUser.nickname} `
+          this.reply.toUserId = toUser.id
+        } else {
+          this.placeholder = '你的评论...'
+        }
+
+        this.commentShow = true
+        this.commentShowIndex = commentShowIndex
+      } else {
+        this.commentShow = false
+        this.commentShowIndex = ''
+      }
+    },
+    publishComment() {
+      let that = this
+      if (!that.reply.content) {
+        return;
+      }
+
+      publishComment(that.reply, this.$store.state.token).then(data => {
+        if (data.success) {
+          that.$message({type: 'success', message: '评论成功', showClose: true})
+          if (!that.comment.childrens) {
+            that.comment.childrens = []
+          }
+          that.comment.childrens.unshift(data.data)
+          that.$emit('commentCountsIncrement')
+          that.showComment(that.commentShowIndex)
+          // this.$router.go(0)
+        } else {
+          that.$message({type: 'error', message: data.msg, showClose: true})
+        }
+      }).catch(error => {
+        if (error !== 'error') {
+          that.$message({type: 'error', message: '评论失败', showClose: true})
+        }
+      })
+    },
+    getEmptyReply() {
+      return {
+        articleId: this.articleId,
+        parent: this.comment.id,
+        toUserId: '',
+        content: ''
+      }
+    },
+    doDeleteComment(commentId) {
+      let delData = {
+        commentId,
+        articleId: this.articleId
+      }
+      deleteComment(delData, this.$store.state.token).then(resp => {
+        if (resp.success) {
+          let thisDom = document.getElementById(this.comment.id)
+          thisDom.parentNode.removeChild(thisDom)
+          this.$message({type: 'success', message: '删除评论成功', showClose: true})
+        } else {
+          this.$message({type: 'error', message: '删除评论失败', showClose: true})
+        }
+      })
+    },
+    toArticle() {
+      this.$router.push({path: `/view/${this.articleId}`})
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+.me-view-comment-write {
+  margin-top: 20px;
+}
+
+.me-view-comment-text {
+  font-size: 16px;
+}
+
+.me-view-info {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.v-note-wrapper .v-note-panel {
+  box-shadow: none !important;
+}
+
+.me-view-comment-item {
+  margin-top: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.me-view-comment-author {
+  margin: 10px 0;
+  vertical-align: middle;
+}
+
+.me-view-nickname {
+  font-size: 14px;
+}
+
+.me-view-comment-content {
+  line-height: 1.5;
+}
+
+.me-view-comment-tools {
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.me-view-comment-tool {
+  font-size: 13px;
+  color: #a6a6a6;
+  padding-right: 14px;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content, .v-note-wrapper .v-note-panel .v-note-show .v-show-content-html {
+  background: #fff !important;
+}
+
+.me-reply-list {
+  padding-left: 16px;
+  border-left: 4px solid #c5cac3;
+}
+
+.me-reply-item {
+  margin-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.me-reply-user {
+  color: #78b6f7;
+}
+
+.me-view-picture {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  vertical-align: middle;
+  background-color: #5fb878;
+}
+
+.me-view-picture {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  vertical-align: middle;
+  background-color: #5fb878;
+}
+
+.me-view-info {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.me-view-meta {
+  font-size: 12px;
+  color: #969696;
+}
+
+.me-view-comment-write {
+  margin-top: 20px;
+}
+
+.me-view-comment-text {
+  font-size: 16px;
+}
+
+.v-note-wrapper .v-note-panel {
+  box-shadow: none !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content, .v-note-wrapper .v-note-panel .v-note-show .v-show-content-html {
+  background: #fff !important;
+}
+</style>

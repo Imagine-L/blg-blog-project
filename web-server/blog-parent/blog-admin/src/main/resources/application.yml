@@ -1,0 +1,36 @@
+# 服务器配置
+server:
+  port: 8889
+spring:
+  cache:
+    redis:
+      time-to-live: 600s
+  # 服务名
+  application:
+    name: liubaiblog-admin
+  # 数据源配置
+  datasource:
+    druid:
+      username: root
+      password: 123456
+      url: jdbc:mysql://localhost:3306/blog_db?useUnicode=true&characterEncoding=UTF-8&serverTimeZone=GMT
+  redis:
+    host: 127.0.0.1
+    port: 6379
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+  task:
+    execution:
+      pool:
+        core-size: 100
+        max-size: 200
+        queue-capacity: 1000
+      thread-name-prefix: thread-pool-
+# mybatis-plus配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
+  global-config:
+    db-config:
+      table-prefix: ms_

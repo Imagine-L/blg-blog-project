@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.liubaiblog.blog.mapper.SysUserMapper">
+
+    <resultMap id="BaseResultMap" type="top.liubaiblog.blog.pojo.SysUser">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="account" column="account" jdbcType="VARCHAR"/>
+        <result property="admin" column="admin" jdbcType="BIT"/>
+        <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
+        <result property="createDate" column="create_date" jdbcType="BIGINT"/>
+        <result property="deleted" column="deleted" jdbcType="BIT"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="lastLogin" column="last_login" jdbcType="BIGINT"/>
+        <result property="mobilePhoneNumber" column="mobile_phone_number" jdbcType="VARCHAR"/>
+        <result property="nickname" column="nickname" jdbcType="VARCHAR"/>
+        <result property="password" column="password" jdbcType="VARCHAR"/>
+        <result property="salt" column="salt" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,account,admin,
+        avatar,create_date,deleted,
+        email,last_login,mobile_phone_number,
+        nickname,password,salt,
+        status
+    </sql>
+
+    <!-- int updatePassword(@Param("id") Long id, @Param("oldPwd") String oldPwd, @Param("newPwd") String newPwd); -->
+    <update id="updatePassword">
+        update ms_sys_user u inner join (
+            select u1.id
+            from ms_sys_user u1
+            left join (select id, md5(concat(#{oldPwd}, salt)) putPwd from ms_sys_user) temp on temp.id = u1.id
+            where u1.id = #{id}
+            and temp.putPwd = u1.password
+            limit 1
+            ) temp
+        on u.id = temp.id
+            set u.password=md5(concat(#{newPwd}, u.salt))
+        where u.id = temp.id
+    </update>
+
+    <!-- selectByArticleId(Long articleId); -->
+    <select id="selectByArticleId" resultMap="BaseResultMap">
+        select *
+        from ms_sys_user
+        where id = (select author_id from ms_article where id = #{articleId});
+    </select>
+
+    <!-- SysUser selectByLoginParam(LoginParam loginParam); -->
+    <select id="selectByLoginParam" resultType="top.liubaiblog.blog.pojo.SysUser">
+        select u1.id,
+               u1.account,
+               u1.avatar,
+               u1.email,
+               u1.nickname,
+               u1.address,
+               u1.info,
+               u1.description
+        from ms_sys_user u1
+                 left join (select id, md5(concat(#{password}, salt)) putPwd from ms_sys_user) temp on temp.id = u1.id
+        where account = #{account}
+          and temp.putPwd = u1.password limit 1
+    </select>
+</mapper>

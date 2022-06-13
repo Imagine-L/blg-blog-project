@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.liubaiblog.blog.mapper.SysLogMapper">
+
+    <resultMap id="BaseResultMap" type="top.liubaiblog.blog.pojo.SysLog">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="createDate" column="create_date" jdbcType="BIGINT"/>
+            <result property="ip" column="ip" jdbcType="VARCHAR"/>
+            <result property="method" column="method" jdbcType="VARCHAR"/>
+            <result property="module" column="module" jdbcType="VARCHAR"/>
+            <result property="nickname" column="nickname" jdbcType="VARCHAR"/>
+            <result property="operation" column="operation" jdbcType="VARCHAR"/>
+            <result property="params" column="params" jdbcType="VARCHAR"/>
+            <result property="time" column="time" jdbcType="BIGINT"/>
+            <result property="userid" column="userid" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,create_date,ip,
+        method,module,nickname,
+        operation,params,time,
+        userid
+    </sql>
+</mapper>

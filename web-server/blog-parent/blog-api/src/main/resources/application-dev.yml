@@ -1,0 +1,63 @@
+# 服务器配置
+server:
+  port: 8181
+spring:
+  cache:
+    redis:
+      time-to-live: 600s
+  # 服务名
+  application:
+    name: liubaiblog
+  # 数据源配置
+  datasource:
+    druid:
+      username: root
+      password: 123456
+      url: jdbc:mysql://localhost:3306/blog_db?useUnicode=true&characterEncoding=UTF-8&serverTimeZone=GMT
+  redis:
+    host: 127.0.0.1
+    port: 6379
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+  task:
+    execution:
+      pool:
+        core-size: 100
+        max-size: 200
+        queue-capacity: 1000
+      thread-name-prefix: thread-pool-
+  rabbitmq:
+    virtual-host: /blog
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      direct:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 5000ms
+          multiplier: 1.5
+  servlet:
+    multipart:
+      max-file-size: 2MB   # 最大文件大小
+      max-request-size: 5MB  # 单次请求最大文件大小
+# mybatis-plus配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
+  global-config:
+    db-config:
+      table-prefix: ms_
+jwt:
+  secretKey: hello_blog%%@#$
+  expiration: 86400000
+qiniu:
+  enable: true
+  url: http://demo.com
+  secure:
+    accessKey: xxxxxxx-xxxxxxxxxxxxxxxxx-xxxxxxxxxx
+    secretKey: xxxxxxx-xxxxxxxxxxxxxxxxx-xxxxxxxxxx
+  bucket: blog-img-space
